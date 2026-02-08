@@ -5,6 +5,10 @@
 *.img
 *.iso
 
+boot.img
+*.bin
+iso_root/
+
 # Build directories
 iso/
 build/
