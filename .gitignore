@@ -1,0 +1,16 @@
+# Build artifacts
+*.o
+*.elf
+*.bin
+*.img
+*.iso
+
+# Build directories
+iso/
+build/
+
+# Editor/OS noise
+*~
+*.swp
+*.swo
+.DS_Store
