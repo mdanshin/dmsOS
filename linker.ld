@@ -6,7 +6,7 @@ SECTIONS
   . = 1M;
 
   .text : ALIGN(4K) {
-    *(.multiboot_header)
+    *(.multiboot)
     *(.text*)
   }
 

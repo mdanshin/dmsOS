@@ -1,18 +1,18 @@
 # dmsOS
 
-Минимальный учебный "скелет ОС" для x86 (32-bit): загрузка через BIOS + GRUB (Multiboot2) и вывод текста в VGA text mode (`0xB8000`).
+Минимальный учебный "скелет ОС" для x86 (32-bit): загрузка через BIOS + GRUB (Multiboot v1) и вывод текста в VGA text mode (`0xB8000`).
 
 Построчная аннотация исходников: `ANNOTATED.md`.
 
 ## Как загружается
 
-BIOS -> GRUB -> Multiboot2 -> `start` (boot.asm) -> `kernel_main` (kernel.c).
+BIOS -> GRUB -> Multiboot -> `start` (boot.asm) -> `kernel_main` (kernel.c).
 
 ## Что в репозитории
 
-- `boot.asm` — заголовок Multiboot2 + точка входа `start`: ставит стек и вызывает `kernel_main`.
+- `boot.asm` — заголовок Multiboot v1 + точка входа `start`: ставит стек и вызывает `kernel_main`.
 - `kernel.c` — минимальное ядро: чистит экран и печатает несколько строк.
-- `linker.ld` — линкер-скрипт: кладет заголовок Multiboot2 в начало и линкует образ на 1 MiB.
+- `linker.ld` — линкер-скрипт: кладет заголовок Multiboot v1 в начало и линкует образ на 1 MiB.
 - `grub.cfg` — конфиг GRUB для загрузки `kernel.elf`.
 - `Makefile` — сборка `kernel.elf` и упаковка в `dmsOS.iso`.
 

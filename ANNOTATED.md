@@ -12,42 +12,35 @@
 
 ## `boot.asm`
 
-- `boot.asm:1` `/* boot.asm - Multiboot2 header + точка входа (GNU as) */` — комментарий: файл содержит Multiboot2-заголовок и входную точку; синтаксис GNU `as` (GAS).
+- `boot.asm:1` `/* boot.asm - Multiboot v1 header + точка входа (GNU as) */` — комментарий: файл содержит Multiboot v1 заголовок и входную точку; синтаксис GNU `as` (GAS).
 - `boot.asm:2` *(пустая строка)* — визуальный разделитель.
-- `boot.asm:3` `.section .multiboot_header` — отдельная секция для заголовка Multiboot2 (так проще гарантировать его раннее размещение линкером).
-- `boot.asm:4` `.align 8` — заголовок Multiboot2 должен быть выровнен по 8 байт.
-- `boot.asm:5` `mb2_header_start:` — метка начала заголовка; нужна для вычисления длины.
-- `boot.asm:6` `.long 0xE85250D6` — magic Multiboot2; по нему GRUB распознает формат.
-- `boot.asm:7` `.long 0` — architecture = 0 (i386 / 32-bit).
-- `boot.asm:8` `.long mb2_header_end - mb2_header_start` — длина заголовка в байтах.
-- `boot.asm:9` `.long -(0xE85250D6 + 0 + (mb2_header_end - mb2_header_start))` — checksum: сумма `magic+arch+len+checksum` должна дать 0 по mod 2^32.
-- `boot.asm:10` *(пустая строка)* — отделяем фиксированную часть header от тегов.
-- `boot.asm:11` `/* End tag */` — комментарий: дальше обязательный завершающий тег.
-- `boot.asm:12` `.word 0` — тип тега (16 бит): 0 = end.
-- `boot.asm:13` `.word 0` — flags тега (16 бит): не используются.
-- `boot.asm:14` `.long 8` — размер end tag (всегда 8 байт).
-- `boot.asm:15` `mb2_header_end:` — метка конца заголовка.
-- `boot.asm:16` *(пустая строка)* — отделяем данные заголовка от кода.
-- `boot.asm:17` `.section .text` — секция исполняемого кода.
-- `boot.asm:18` `.code32` — генерировать 32-битные инструкции; GRUB передает управление в 32-bit protected mode.
-- `boot.asm:19` `.globl start` — экспортируем символ `start` (он будет entrypoint в ELF).
-- `boot.asm:20` `.extern kernel_main` — объявляем внешний символ (функция в `kernel.c`).
-- `boot.asm:21` *(пустая строка)* — разделитель.
-- `boot.asm:22` `start:` — метка точки входа ядра.
-- `boot.asm:23` `cli` — выключаем маскируемые прерывания (пока нет IDT/обработчиков).
-- `boot.asm:24` `movl $stack_top, %esp` — ставим стек на вершину заранее зарезервированной области.
-- `boot.asm:25` `call kernel_main` — переходим в C-код ядра.
-- `boot.asm:26` *(пустая строка)* — разделитель.
-- `boot.asm:27` `.hang:` — метка аварийного/завершающего цикла, если `kernel_main` вернется.
-- `boot.asm:28` `hlt` — останавливаем CPU до события (экономит ресурсы).
-- `boot.asm:29` `jmp .hang` — бесконечный цикл.
-- `boot.asm:30` *(пустая строка)* — разделитель.
-- `boot.asm:31` `.section .bss` — неинициализированные данные; стек резервируется без увеличения файла.
-- `boot.asm:32` `.align 16` — выравниваем стек по 16 байт.
-- `boot.asm:33` `stack_bottom:` — нижняя граница стека (меньший адрес).
-- `boot.asm:34` `.skip 16384` — резервируем 16 KiB под стек.
-- `boot.asm:35` `stack_top:` — верхняя граница стека; именно сюда ставим `%esp`.
-- `boot.asm:36` *(пустая строка)* — финальная пустая строка.
+- `boot.asm:3` `/* Multiboot v1 header (must be within first 8 KiB) */` — комментарий: заголовок v1 должен лежать в первых 8 KiB образа.
+- `boot.asm:4` `.section .multiboot` — секция с заголовком Multiboot v1.
+- `boot.asm:5` `.align 4` — выравнивание на 4 байта (требование заголовка v1).
+- `boot.asm:6` `.long 0x1BADB002` — magic Multiboot v1.
+- `boot.asm:7` `.long 0` — flags: минимальный вариант без дополнительных требований.
+- `boot.asm:8` `.long -(0x1BADB002 + 0)` — checksum: magic + flags + checksum = 0.
+- `boot.asm:9` *(пустая строка)* — разделитель.
+- `boot.asm:10` `.section .text` — секция исполняемого кода.
+- `boot.asm:11` `.code32` — 32-битные инструкции.
+- `boot.asm:12` `.globl start` — экспортируем символ `start` (entrypoint в ELF).
+- `boot.asm:13` `.extern kernel_main` — объявляем внешний символ (функция в `kernel.c`).
+- `boot.asm:14` *(пустая строка)* — разделитель.
+- `boot.asm:15` `start:` — точка входа ядра.
+- `boot.asm:16` `cli` — выключаем маскируемые прерывания.
+- `boot.asm:17` `movl $stack_top, %esp` — ставим стек.
+- `boot.asm:18` `call kernel_main` — переходим в C-код.
+- `boot.asm:19` *(пустая строка)* — разделитель.
+- `boot.asm:20` `.hang:` — бесконечный цикл.
+- `boot.asm:21` `hlt` — останавливаем CPU.
+- `boot.asm:22` `jmp .hang` — зацикливаемся.
+- `boot.asm:23` *(пустая строка)* — разделитель.
+- `boot.asm:24` `.section .bss` — секция неинициализированных данных.
+- `boot.asm:25` `.align 16` — выравнивание стека.
+- `boot.asm:26` `stack_bottom:` — нижняя граница стека.
+- `boot.asm:27` `.skip 16384` — резервируем 16 KiB под стек.
+- `boot.asm:28` `stack_top:` — верхняя граница стека.
+- `boot.asm:29` *(пустая строка)* — финальная пустая строка.
 
 ---
 
@@ -105,7 +98,7 @@
 - `linker.ld:6` `. = 1M;` — базовый адрес размещения образа: 1 MiB.
 - `linker.ld:7` *(пустая строка)* — разделитель.
 - `linker.ld:8` `.text : ALIGN(4K) {` — секция кода, выравнивание по странице.
-- `linker.ld:9` `*(.multiboot_header)` — кладем заголовок Multiboot2 в начало образа.
+- `linker.ld:9` `*(.multiboot)` — кладем заголовок Multiboot v1 в начало образа.
 - `linker.ld:10` `*(.text*)` — весь код из входных `.text*` секций.
 - `linker.ld:11` `}` — конец `.text`.
 - `linker.ld:12` *(пустая строка)* — разделитель.
@@ -123,7 +116,7 @@
 - `grub.cfg:2` `set default=0` — пункт меню по умолчанию.
 - `grub.cfg:3` *(пустая строка)* — разделитель.
 - `grub.cfg:4` `menuentry "dmsOS" {` — один пункт меню.
-- `grub.cfg:5` `multiboot2 /boot/kernel.elf` — загружаем ядро по протоколу Multiboot2.
+- `grub.cfg:5` `multiboot /boot/kernel.elf` — загружаем ядро по протоколу Multiboot v1.
 - `grub.cfg:6` `boot` — старт загрузки.
 - `grub.cfg:7` `}` — конец `menuentry`.
 - `grub.cfg:8` *(пустая строка)* — финальная пустая строка.
@@ -133,7 +126,7 @@
 ## `Makefile`
 
 - `Makefile:1` `# Makefile` — комментарий: файл правил сборки.
-- `Makefile:2` `# Минимальная сборка BIOS/GRUB (Multiboot2).` — комментарий: схема загрузки и протокол.
+- `Makefile:2` `# Минимальная сборка BIOS/GRUB (Multiboot v1).` — комментарий: схема загрузки и протокол.
 - `Makefile:3` `# Рекомендуется кросс-компилятор i686-elf-*` — комментарий: для freestanding ядра лучше кросс-toolchain.
 - `Makefile:4` *(пустая строка)* — разделитель.
 - `Makefile:5` `CC ?= i686-elf-gcc` — компилятор C (можно переопределить: `make CC=gcc`).

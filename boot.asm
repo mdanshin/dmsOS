@@ -1,18 +1,11 @@
-/* boot.asm - Multiboot2 header + точка входа (GNU as) */
+/* boot.asm - Multiboot v1 header + точка входа (GNU as) */
 
-    .section .multiboot_header
-    .align 8
-mb2_header_start:
-    .long 0xE85250D6
+    /* Multiboot v1 header (must be within first 8 KiB) */
+    .section .multiboot
+    .align 4
+    .long 0x1BADB002
     .long 0
-    .long mb2_header_end - mb2_header_start
-    .long -(0xE85250D6 + 0 + (mb2_header_end - mb2_header_start))
-
-    /* End tag */
-    .word 0
-    .word 0
-    .long 8
-mb2_header_end:
+    .long -(0x1BADB002 + 0)
 
     .section .text
     .code32
